@@ -26,9 +26,45 @@ var GlobalVar Globals
 // ErrPrefix is a container type for error prefix strings.
 type ErrPrefix string
 
+type GitSpec struct {
+	Revision  string
+	ClonedDir string
+}
+
+// Returns if the provided revision is a "COMMIT" or a "TAG"
+func (spec *GitSpec) typeOfGitRevision() string {
+	// Check 1st line of git show
+	return ""
+}
+
+// Returns a unique version number based on the commit/tag
+func (spec *GitSpec) GetVersionFromRevision() string {
+	// If type is TAG, return as is
+
+	// If type is commit
+	// If short commit, return as is
+
+	// If long commit, reduce size
+	return ""
+}
+
 // RunSystemCmd runs a command on the shell and pipes to stdout and stderr
 func RunSystemCmd(name string, arg ...string) error {
 	cmd := exec.Command(name, arg...)
+	cmd.Stderr = os.Stderr
+	if !GlobalVar.Quiet {
+		cmd.Stdout = os.Stdout
+	} else {
+		cmd.Stdout = io.Discard
+	}
+	err := cmd.Run()
+	return err
+}
+
+// Runs the system command from a specified directory
+func RunSystemCmdInDir(dir string, name string, arg ...string) error {
+	cmd := exec.Command(name, arg...)
+	cmd.Dir = dir
 	cmd.Stderr = os.Stderr
 	if !GlobalVar.Quiet {
 		cmd.Stdout = os.Stdout
@@ -200,6 +236,54 @@ func VerifyTarballSignature(
 		return fmt.Errorf("%sError verifying signature %s for tarball %s with pubkey %s."+
 			"\ngpg --verify err: %sstdout:%s",
 			errPrefix, tarballSigPath, tarballPath, pubKeyPath, err, output)
+	}
+
+	return nil
+}
+
+// VerifyGitSignature verifies that the git repo commit/tag is signed.
+func VerifyGitSignature(pubKeyPath string, gitSpec GitSpec, errPrefix ErrPrefix) error {
+	tmpDir, mkdtErr := os.MkdirTemp("", "eext-keyring")
+	if mkdtErr != nil {
+		return fmt.Errorf("%sError '%s'creating temp dir for keyring",
+			errPrefix, mkdtErr)
+	}
+	defer os.RemoveAll(tmpDir)
+
+	keyRingPath := filepath.Join(tmpDir, "eext.gpg")
+	baseArgs := []string{
+		"--homedir", tmpDir,
+		"--no-default-keyring", "--keyring", keyRingPath}
+	gpgCmd := "gpg"
+
+	// Create keyring
+	createKeyRingCmdArgs := append(baseArgs, "--fingerprint")
+	if err := RunSystemCmd(gpgCmd, createKeyRingCmdArgs...); err != nil {
+		return fmt.Errorf("%sError '%s'creating keyring",
+			errPrefix, err)
+	}
+
+	// Import public key
+	importKeyCmdArgs := append(baseArgs, "--import", pubKeyPath)
+	if err := RunSystemCmd(gpgCmd, importKeyCmdArgs...); err != nil {
+		return fmt.Errorf("%sError '%s' importing public-key %s",
+			errPrefix, err, pubKeyPath)
+	}
+
+	var verifyRepoCmd []string
+	revision := gitSpec.Revision
+	revisionType := gitSpec.typeOfGitRevision()
+	if revisionType == "COMMIT" {
+		verifyRepoCmd = []string{"verify-commit", "-v", revision}
+	} else if revisionType == "TAG" {
+		verifyRepoCmd = []string{"verify-tag", "-v", revision}
+	} else {
+		return fmt.Errorf("%sinvalid revision %s provided, provide either a COMMIT or TAG", errPrefix, revision)
+	}
+	clonedDir := gitSpec.ClonedDir
+	err := RunSystemCmdInDir(clonedDir, "git", verifyRepoCmd...)
+	if err != nil {
+		return fmt.Errorf("%serror during verifying git repo at %s: %s", errPrefix, clonedDir, err)
 	}
 
 	return nil
