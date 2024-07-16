@@ -71,6 +71,19 @@ repo-bundle:
         enabled: false
 #---------------------------------------------------------------------------------------------
 
+#---------------------------------------------------------------------------------------------
+#  fc40-snapshot:
+
+#    gpgcheck: true
+#    gpgkey: 
+#    baseurl: '{{.Host}}/artifactory/eext-fedora-linux/{{.RepoName}}/{{.Version}}/{{if eq .Arch "i686"}}x86_64{{else}}{{.Arch}}{{end}}/os'
+#    repo:
+#      releases:
+#        enabled: true
+#    version-labels:
+#      default: 40
+#---------------------------------------------------------------------------------------------
+
 # --------------------------------------------------------------------------------------------
   el9-unsafe:
     # DO NOT use el9-unsafe as a repo-bundle in your eext.yaml unless you know what you're doing.
@@ -175,3 +188,24 @@ repo-bundle:
       # default always points to upstream next/beta repo which receives updates.
       default: 9
 # --------------------------------------------------------------------------------------------
+
+#---------------------------------------------------------------------------------------------
+  fc40-unsafe:
+    # DO NOT use fc40-unsafe as a repo-bundle in your eext.yaml
+    # unless you know what you're doing. Use fc40-snapshot instead because this
+    # will ensure build reproducibility.
+    # fc40-unsafe is used by the eext team for experiments.
+
+    # fc40 publishes i686 RPMS in x86_64 repo. This ensures that we point to the x86_64 repo
+    # when target is i686.
+    gpgcheck: true
+    gpgkey: file:///usr/share/distribution-gpg-keys/fedora/RPM-GPG-KEY-fedora-40-primary
+
+    use-base-arch: true
+    baseurl: "{{.Host}}/artifactory/eext-fedora-linux/{{.RepoName}}/{{.Version}}/Everything/{{.Arch}}/os"
+    repo:
+      releases:
+        enabled: true
+    version-labels:
+      default: 40
+#---------------------------------------------------------------------------------------------

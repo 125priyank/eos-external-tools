@@ -6,11 +6,11 @@ package dnfconfig
 import (
 	"bytes"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"text/template"
 
 	"github.com/spf13/viper"
+	"golang.org/x/exp/slices"
 	"gopkg.in/yaml.v2"
 
 	"code.arista.io/eos/tools/eext/util"
@@ -19,6 +19,7 @@ import (
 const (
 	RepoHighPriority     int = 1
 	RepoStandardPriority     = 2
+	RepoLowPriority          = 3
 )
 
 // DnfRepoConfig holds baseURL format template(/string)
@@ -127,6 +128,7 @@ func (b *DnfRepoBundleConfig) getBaseURL(
 // in the bundle aggregating the dnf config file and version/params override
 // coming in from the manifest.
 func (b *DnfRepoBundleConfig) GetDnfRepoParams(
+	bundleName string,
 	repoName string,
 	arch string,
 	versionOverride string,
@@ -159,6 +161,12 @@ func (b *DnfRepoBundleConfig) GetDnfRepoParams(
 		enabled = repoConfig.Enabled
 	}
 
+	priority := RepoStandardPriority
+	lowPriorityRepo := []string{"fc40-unsafe", "fc40-snapshot"}
+	if slices.Contains(lowPriorityRepo, bundleName) {
+		priority = RepoLowPriority
+	}
+
 	return &DnfRepoParams{
 		Name:     repoName,
 		BaseURL:  baseURL,
@@ -166,7 +174,7 @@ func (b *DnfRepoBundleConfig) GetDnfRepoParams(
 		Exclude:  exclude,
 		GpgCheck: b.GpgCheck,
 		GpgKey:   b.GpgKey,
-		Priority: RepoStandardPriority,
+		Priority: priority,
 	}, nil
 }
 
@@ -185,9 +193,9 @@ func LoadDnfConfig() (*DnfConfig, error) {
 			cfgPath, statErr)
 	}
 
-	yamlContents, readErr := ioutil.ReadFile(cfgPath)
+	yamlContents, readErr := os.ReadFile(cfgPath)
 	if readErr != nil {
-		return nil, fmt.Errorf("dnfconfig.LoadDnfConfig: ioutil.ReadFile on %s returned %s",
+		return nil, fmt.Errorf("dnfconfig.LoadDnfConfig: os.ReadFile on %s returned %s",
 			cfgPath, readErr)
 	}
 

@@ -93,6 +93,7 @@ func (cfgBldr *mockCfgBuilder) populateTemplateData() error {
 		sort.Strings(reposInBundle)
 		for _, repoName := range reposInBundle {
 			repoParams, err := bundleConfig.GetDnfRepoParams(
+				bundleName,
 				repoName,
 				arch,
 				bundleVersionOverride,

@@ -153,6 +153,22 @@ func TestDefaultDnfRepoConfig(t *testing.T) {
 			},
 			defaultVersion: "9",
 		},
+		"fc40-unsafe": ExpectedDefaultRepoBundle{
+			repoToURLFormatString: map[string]string{
+				"releases": "%s/artifactory/%s/releases/%s/Everything/%s/os",
+			},
+			archToArtifactoryRepo: map[string]string{
+				"i686":    "eext-fedora-linux",
+				"x86_64":  "eext-fedora-linux",
+				"aarch64": "eext-fedora-linux",
+			},
+			archToURLFormatArch: map[string]string{
+				"i686":    "x86_64", // baseArch
+				"x86_64":  "x86_64",
+				"aarch64": "aarch64",
+			},
+			defaultVersion: "40",
+		},
 	}
 
 	t.Log("Testing expected defaults")
@@ -167,7 +183,7 @@ func TestDefaultDnfRepoConfig(t *testing.T) {
 			t.Logf("\t\tTesting repo %s", expectedRepo)
 			for _, arch := range []string{"i686", "x86_64", "aarch64"} {
 				t.Logf("\t\t\tTesting arch %s", arch)
-				repoParams, err := bundleConfig.GetDnfRepoParams(expectedRepo,
+				repoParams, err := bundleConfig.GetDnfRepoParams(expectedBundleName, expectedRepo,
 					arch,
 					"",  // versionOverride
 					nil, // repoOverrides

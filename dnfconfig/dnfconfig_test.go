@@ -70,7 +70,7 @@ func TestRepoConfig(t *testing.T) {
 					arch, bundleName, version)
 				expectedURL := fmt.Sprintf("http://foo.org/%s-%s/repo1/%s/",
 					bundleName, expectedVersion, expectedArch)
-				repoParams, err := bundleConfig.GetDnfRepoParams("repo1",
+				repoParams, err := bundleConfig.GetDnfRepoParams("bundle1", "repo1",
 					arch,
 					version,
 					nil,
@@ -89,6 +89,7 @@ func TestRepoConfig(t *testing.T) {
 	}
 
 	repo1ParamsWithoutOverride, err := bundle1Config.GetDnfRepoParams(
+		"bundle1",
 		"repo1",
 		"x86_64",
 		"",
@@ -110,6 +111,7 @@ func TestRepoConfig(t *testing.T) {
 		*repo1ParamsWithoutOverride)
 
 	repo1ParamsWithOverride, err := bundle1Config.GetDnfRepoParams(
+		"bundle1",
 		"repo1",
 		"x86_64",
 		"",
