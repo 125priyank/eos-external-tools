@@ -82,17 +82,6 @@ images:
           cp -a ./pki/* $DESTDIR/etc/pki/eext
           mkdir -p $DESTDIR/etc
           touch $DESTDIR/etc/resolv.conf
-    entry:
-      mutables: &eext-mutables
-        - /var/eext
-        - /var/cache
-        - /var/lib/mock
-        - /var/lib/rpm
-        - /var/tmp
-      mounts:
-        - source: /etc/resolv.conf
-          target: /etc/resolv.conf
-          options: ro,bind
       # We need access to artifactory.infra.corp.arista.io
       # to make mock work
       share-net: true
